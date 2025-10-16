@@ -44,7 +44,12 @@ public class MautVerwaltungTest {
             IDatabaseTester dbTester = new JdbcDatabaseTester(DbCred.driverClass, DbCred.url, DbCred.user, DbCred.password,
                     DbCred.schema);
             dbTesterCon = dbTester.getConnection();
+
+
+            // Original Code
             IDataSet pre = new CsvDataSet(new File("test-data/ue02"));
+            IDataSet fullDataSet = new CsvDataSet(new File("test-data/ue02"));
+
             dbTester.setDataSet(pre);
             DatabaseOperation.CLEAN_INSERT.execute(dbTesterCon, pre);
             maut.setConnection(dbTesterCon.getConnection());
