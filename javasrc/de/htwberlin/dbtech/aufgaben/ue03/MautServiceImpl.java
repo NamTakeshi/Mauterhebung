@@ -1,11 +1,8 @@
 package de.htwberlin.dbtech.aufgaben.ue03;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
-import de.htwberlin.dbtech.dao.*;
+import de.htwberlin.dbtech.aufgaben.ue03.dao.*;
 import de.htwberlin.dbtech.object.Buchung;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

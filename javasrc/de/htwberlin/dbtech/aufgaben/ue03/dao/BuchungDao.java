@@ -1,4 +1,4 @@
-package de.htwberlin.dbtech.dao;
+package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
 import de.htwberlin.dbtech.object.Buchung;
 
