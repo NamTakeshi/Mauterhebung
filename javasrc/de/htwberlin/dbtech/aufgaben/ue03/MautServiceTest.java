@@ -68,7 +68,8 @@ public class MautServiceTest {
     public void testMauterhebung_1() {
         // Das Fahrzeug mit dem Kennzeichen LDS 677 ist nicht registriert bzw.
         // nicht aktiv und hat auch kein Fahrzeuggeraet verbaut. Es
-        // liegt auch keine offenen Buchung im Manuellen Verfahren vor. Das
+        // liegt auch keine
+        // offenen Buchung im Manuellen Verfahren vor. Das
         // unbekannte Fahrzeug fuehrt zu einer UnkownVehicleException.
         maut.berechneMaut(1200, 4, "LDS 677");
     }
