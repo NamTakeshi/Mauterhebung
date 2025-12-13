@@ -1,22 +1,15 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
+import de.htwberlin.dbtech.exceptions.DataException;
+import de.htwberlin.dbtech.object.Mautkategorie;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import de.htwberlin.dbtech.exceptions.DataException;
-
-/**
- * Implementierung des MautkategorieDao mit JDBC
- *
- */
 public class MautkategorieDaoImpl implements MautkategorieDao {
 
-    private static final Logger L = LoggerFactory.getLogger(MautkategorieDaoImpl.class);
-    private Connection connection;
+    private final Connection connection;
 
     public MautkategorieDaoImpl(Connection connection) {
         this.connection = connection;
@@ -30,51 +23,83 @@ public class MautkategorieDaoImpl implements MautkategorieDao {
     }
 
     @Override
-    public int findKategorieIdForAutomatic(String kennzeichen, int achszahl) {
-        String sql1 = "SELECT SSKL_ID FROM FAHRZEUG WHERE KENNZEICHEN = ?";
-        String sql2 = "SELECT KATEGORIE_ID FROM MAUTKATEGORIE " +
-                "WHERE SSKL_ID = ? " +
-                "AND (ACHSZAHL = '= ' || ? OR ACHSZAHL LIKE '>= %') " + // weil sskl = 4 und achszahl >= 5 hat kategorie 16
-                "ORDER BY KATEGORIE_ID DESC FETCH FIRST 1 ROW ONLY";
-
-        try (PreparedStatement ps1 = getConnection().prepareStatement(sql1)) {
-            ps1.setString(1, kennzeichen);
-            try (ResultSet rs1 = ps1.executeQuery()) {
-                rs1.next();
-                int ssklId = rs1.getInt("SSKL_ID");
-
-                try (PreparedStatement ps2 = getConnection().prepareStatement(sql2)) {
-                    ps2.setInt(1, ssklId);
-                    ps2.setInt(2, achszahl);
-                    try (ResultSet rs2 = ps2.executeQuery()) {
-                        if (rs2.next()) {
-                            return rs2.getInt("KATEGORIE_ID");
-                        } else {
-                            throw new RuntimeException("Keine passende Mautkategorie gefunden");
-                        }
-                    }
-                }
-            }
+    public Mautkategorie create(Mautkategorie k) {
+        String sql = "INSERT INTO MAUTKATEGORIE " +
+                "(KATEGORIE_ID, SSKL_ID, KAT_BEZEICHNUNG, ACHSZAHL, MAUTSATZ_JE_KM) " +
+                "VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, k.getKategorieId());
+            ps.setInt(2, k.getSsklId());
+            ps.setString(3, k.getKatBezeichnung());
+            ps.setString(4, k.getAchszahl());
+            ps.setDouble(5, k.getMautsatzJeKm());
+            ps.executeUpdate();
+            return k;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public double getMautsatzJeKm(int kategorieId) {
-        String sql = "SELECT MAUTSATZ_JE_KM FROM MAUTKATEGORIE WHERE KATEGORIE_ID = ?";
-
+    @Override
+    public Mautkategorie getById(int kategorieId) {
+        String sql = "SELECT KATEGORIE_ID, SSKL_ID, KAT_BEZEICHNUNG, ACHSZAHL, MAUTSATZ_JE_KM " +
+                "FROM MAUTKATEGORIE WHERE KATEGORIE_ID = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, kategorieId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("MAUTSATZ_JE_KM");
-                } else {
-                    throw new RuntimeException("Mautkategorie nicht gefunden: " + kategorieId);
+                    return mapRowToMautkategorie(rs);
                 }
+                return null;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-}
 
+    @Override
+    public void update(Mautkategorie k) {
+        String sql = "UPDATE MAUTKATEGORIE " +
+                "SET SSKL_ID = ?, KAT_BEZEICHNUNG = ?, ACHSZAHL = ?, MAUTSATZ_JE_KM = ? " +
+                "WHERE KATEGORIE_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, k.getSsklId());
+            ps.setString(2, k.getKatBezeichnung());
+            ps.setString(3, k.getAchszahl());
+            ps.setDouble(4, k.getMautsatzJeKm());
+            ps.setInt(5, k.getKategorieId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(int kategorieId) {
+        String sql = "DELETE FROM MAUTKATEGORIE WHERE KATEGORIE_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, kategorieId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Wandelt eine Datenbankzeile (ResultSet) in ein Objekt um.
+     * Wird intern von getById() und ähnlichen Leseoperationen aufgerufen.
+     *
+     * @param rs ResultSet mit den Spaltendaten der Tabelle
+     * @return neues Objekt mit den Werten aus der Datenbankzeile
+     * @throws SQLException wenn beim Lesen der Spaltenwerte ein Fehler auftritt
+     */
+    private Mautkategorie mapRowToMautkategorie(ResultSet rs) throws SQLException {
+        Mautkategorie k = new Mautkategorie();
+        k.setKategorieId(rs.getInt("KATEGORIE_ID"));
+        k.setSsklId(rs.getInt("SSKL_ID"));
+        k.setKatBezeichnung(rs.getString("KAT_BEZEICHNUNG"));
+        k.setAchszahl(rs.getString("ACHSZAHL"));
+        k.setMautsatzJeKm(rs.getDouble("MAUTSATZ_JE_KM"));
+        return k;
+    }
+}

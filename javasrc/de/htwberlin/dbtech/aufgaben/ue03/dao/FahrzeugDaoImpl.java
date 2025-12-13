@@ -1,22 +1,12 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import de.htwberlin.dbtech.exceptions.DataException;
+import de.htwberlin.dbtech.object.Fahrzeug;
+import java.sql.*;
 
-/**
- * Implementierung des FahrzeugDao mit JDBC
- *
- */
 public class FahrzeugDaoImpl implements FahrzeugDao {
 
-    private static final Logger L = LoggerFactory.getLogger(FahrzeugDaoImpl.class);
-    private Connection connection;
+    private final Connection connection;
 
     public FahrzeugDaoImpl(Connection connection) {
         this.connection = connection;
@@ -30,46 +20,53 @@ public class FahrzeugDaoImpl implements FahrzeugDao {
     }
 
     @Override
-    public boolean isVehicleRegistered(String kennzeichen){
-        String query = "SELECT COUNT(*) AS anzahl FROM (Select f.Kennzeichen FROM Fahrzeug f Join Fahrzeuggerat f2 on f.FZ_ID = f2.FZ_ID WHERE f.Kennzeichen = ? AND f.Abmeldedatum is NULL AND f2.STATUS = 'active' UNION ALL Select b.Kennzeichen FROM Buchung b  WHERE b.Kennzeichen = ? AND b.B_ID = 1)";
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try{
-            ps = getConnection().prepareStatement(query);
-            ps.setString(1, kennzeichen);
-            ps.setString(2, kennzeichen);
-            rs = ps.executeQuery();
-
-            if(rs.next()){
-                return rs.getInt("ANZAHL") > 0;
-            } else  {
-                return false;
-            }
-        } catch(SQLException e) {
-            throw new RuntimeException(e);
-        } catch (NullPointerException e){
+    public Fahrzeug create(Fahrzeug f) {
+        String sql = "INSERT INTO FAHRZEUG (FZ_ID, SSKL_ID, NUTZER_ID, KENNZEICHEN, FIN, ACHSEN, GEWICHT, ANMELDEDATUM, ABMELDEDATUM, ZULASSUNGSLAND) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setLong(1, f.getFzId());
+            ps.setInt(2, f.getSsklId());
+            ps.setInt(3, f.getNutzerId());
+            ps.setString(4, f.getKennzeichen());
+            ps.setString(5, f.getFin());
+            ps.setInt(6, f.getAchsen());
+            ps.setDouble(7, f.getGewicht());
+            ps.setDate(8, f.getAnmeldedatum());
+            ps.setDate(9, f.getAbmeldedatum());
+            ps.setString(10, f.getZulassungsland());
+            ps.executeUpdate();
+            return f;
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public boolean hasActiveDevice(String kennzeichen) {
-        String sql = "SELECT COUNT(*) AS ANZAHL " +
-                "FROM FAHRZEUG f " +
-                "JOIN FAHRZEUGGERAT g ON f.FZ_ID = g.FZ_ID " +
-                "WHERE f.KENNZEICHEN = ? " +
-                "AND g.STATUS = 'active'";
+    public Fahrzeug getById(long fzId) {
+        String sql = "SELECT * FROM FAHRZEUG WHERE FZ_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setLong(1, fzId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToFahrzeug(rs);
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    @Override
+    public Fahrzeug getByKennzeichen(String kennzeichen) {
+        String sql = "SELECT * FROM FAHRZEUG WHERE KENNZEICHEN = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, kennzeichen);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("ANZAHL") > 0;
-                } else {
-                    return false;
+                    return mapRowToFahrzeug(rs);
                 }
+                return null;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -77,28 +74,60 @@ public class FahrzeugDaoImpl implements FahrzeugDao {
     }
 
     @Override
-    public boolean isCorrectAxleCountAutomatic(String kennzeichen, int achszahl){
-
-        String sql = "SELECT f.ACHSEN " +
-                "FROM FAHRZEUG f " +
-                "WHERE f.KENNZEICHEN = ?";
-
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)){
-            ps.setString(1, kennzeichen);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int registrierteAchsen = rs.getInt("ACHSEN");
-                    return registrierteAchsen == achszahl;
-                } else {
-                    // sollte eigentlich nicht vorkommen, wenn vorher isVehicleRegistered(...) geprüft wurde
-                    return false;
-                }
-            }
+    public void update(Fahrzeug f) {
+        String sql = "UPDATE FAHRZEUG SET SSKL_ID = ?, NUTZER_ID = ?, KENNZEICHEN = ?, FIN = ?, " +
+                "ACHSEN = ?, GEWICHT = ?, ANMELDEDATUM = ?, ABMELDEDATUM = ?, ZULASSUNGSLAND = ? " +
+                "WHERE FZ_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, f.getSsklId());
+            ps.setInt(2, f.getNutzerId());
+            ps.setString(3, f.getKennzeichen());
+            ps.setString(4, f.getFin());
+            ps.setInt(5, f.getAchsen());
+            ps.setDouble(6, f.getGewicht());
+            ps.setDate(7, f.getAnmeldedatum());
+            ps.setDate(8, f.getAbmeldedatum());
+            ps.setString(9, f.getZulassungsland());
+            ps.setLong(10, f.getFzId());
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    @Override
+    public void delete(long fzId) {
+        String sql = "DELETE FROM FAHRZEUG WHERE FZ_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setLong(1, fzId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Wandelt eine Datenbankzeile (ResultSet) in ein Objekt um.
+     * Wird intern von getById() und ähnlichen Leseoperationen aufgerufen.
+     *
+     * @param rs ResultSet mit den Spaltendaten der Tabelle
+     * @return neues Objekt mit den Werten aus der Datenbankzeile
+     * @throws SQLException wenn beim Lesen der Spaltenwerte ein Fehler auftritt
+     */
+    private Fahrzeug mapRowToFahrzeug(ResultSet rs) throws SQLException {
+        Fahrzeug f = new Fahrzeug();
+        f.setFzId(rs.getLong("FZ_ID"));
+        f.setSsklId(rs.getInt("SSKL_ID"));
+        f.setNutzerId(rs.getInt("NUTZER_ID"));
+        f.setKennzeichen(rs.getString("KENNZEICHEN"));
+        f.setFin(rs.getString("FIN"));
+        f.setAchsen(rs.getInt("ACHSEN"));
+        f.setGewicht(rs.getDouble("GEWICHT"));
+        f.setAnmeldedatum(rs.getDate("ANMELDEDATUM"));
+        f.setAbmeldedatum(rs.getDate("ABMELDEDATUM"));   // kann null sein
+        f.setZulassungsland(rs.getString("ZULASSUNGSLAND"));
+        return f;
     }
 }
+
 

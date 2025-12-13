@@ -1,35 +1,17 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
-/**
- * Die Schnittstelle für Fahrzeug-Datenbankzugriffe
- *
- */
+import de.htwberlin.dbtech.object.Fahrzeug;
+
 public interface FahrzeugDao {
 
-    /**
-     * Prüft, ob das Fahrzeug registriert ist (aktiv oder mit offener Buchung)
-     *
-     * @param kennzeichen das Kennzeichen des Fahrzeugs
-     * @return true wenn registriert, false sonst
-     */
-    boolean isVehicleRegistered(String kennzeichen);
+    Fahrzeug create(Fahrzeug fahrzeug);
 
-    /**
-     * Prüft, ob das Fahrzeug ein aktives Fahrzeuggerät hat (automatisches Verfahren)
-     *
-     * @param kennzeichen das Kennzeichen des Fahrzeugs
-     * @return true wenn aktives Gerät vorhanden, false sonst
-     */
-    boolean hasActiveDevice(String kennzeichen);
+    Fahrzeug getById(long fzId);
 
-    /**
-     * Prüft, ob die gemessene Achszahl zur registrierten Achszahl passt
-     *
-     * @param kennzeichen das Kennzeichen des Fahrzeugs
-     * @param achszahl die gemessene Achszahl
-     * @return true wenn korrekt, false sonst
-     */
-    boolean isCorrectAxleCountAutomatic(String kennzeichen, int achszahl);
+    Fahrzeug getByKennzeichen(String kennzeichen);
 
+    void update(Fahrzeug fahrzeug);
 
+    void delete(long fzId);
 }
+

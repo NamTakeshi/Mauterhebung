@@ -1,28 +1,22 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
-/**
- * Die Schnittstelle für Mauterhebung-Datenbankzugriffe
- *
- */
+import de.htwberlin.dbtech.object.Mauterhebung;
+
 public interface MauterhebungDao {
 
     /**
-     * Bestimmt die nächste verfügbare Maut-ID
+     * Ermittelt die nächste freie MAUT_ID.
+     * Typischerweise wird der maximale vorhandene Wert um 1 erhöht.
      *
-     * @return die nächste MAUT_ID
+     * @return nächste freie Maut-ID
      */
     int getNextMautId();
 
-    /**
-     * Speichert eine neue Mauterhebung in der Datenbank
-     *
-     * @param mautId die Maut-ID
-     * @param mautAbschnitt der Mautabschnitt
-     * @param kennzeichen das Kennzeichen des Fahrzeugs
-     * @param kategorieId die Kategorie-ID
-     * @param kosten die berechneten Kosten
-     */
-    void insertMauterhebung(int mautId, int mautAbschnitt, String kennzeichen,
-                            int kategorieId, double kosten);
-}
+    Mauterhebung create(Mauterhebung maut);
 
+    Mauterhebung getById(int mautId);
+
+    void update(Mauterhebung maut);
+
+    void delete(int mautId);
+}

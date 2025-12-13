@@ -1,22 +1,12 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import de.htwberlin.dbtech.exceptions.DataException;
+import de.htwberlin.dbtech.object.Mautabschnitt;
+import java.sql.*;
 
-/**
- * Implementierung des MautabschnittDao mit JDBC
- *
- */
 public class MautabschnittDaoImpl implements MautabschnittDao {
 
-    private static final Logger L = LoggerFactory.getLogger(MautabschnittDaoImpl.class);
-    private Connection connection;
+    private final Connection connection;
 
     public MautabschnittDaoImpl(Connection connection) {
         this.connection = connection;
@@ -30,18 +20,55 @@ public class MautabschnittDaoImpl implements MautabschnittDao {
     }
 
     @Override
-    public double getAbschnittsLaenge(int mautAbschnitt) {
-        String sql = "SELECT LAENGE FROM MAUTABSCHNITT WHERE ABSCHNITTS_ID = ?";
-
+    public Mautabschnitt create(Mautabschnitt a) {
+        String sql = "INSERT INTO MAUTABSCHNITT (ABSCHNITTS_ID, LAENGE) VALUES (?, ?)";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
-            ps.setInt(1, mautAbschnitt);
+            ps.setInt(1, a.getAbschnittsId());
+            ps.setDouble(2, a.getLaenge());
+            ps.executeUpdate();
+            return a;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Mautabschnitt getById(int abschnittsId) {
+        String sql = "SELECT ABSCHNITTS_ID, LAENGE FROM MAUTABSCHNITT WHERE ABSCHNITTS_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, abschnittsId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("LAENGE");
-                } else {
-                    throw new RuntimeException("Mautabschnitt nicht gefunden: " + mautAbschnitt);
+                    Mautabschnitt a = new Mautabschnitt();
+                    a.setAbschnittsId(rs.getInt("ABSCHNITTS_ID"));
+                    a.setLaenge(rs.getDouble("LAENGE"));
+                    return a;
                 }
+                return null;
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void update(Mautabschnitt a) {
+        String sql = "UPDATE MAUTABSCHNITT SET LAENGE = ? WHERE ABSCHNITTS_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setDouble(1, a.getLaenge());
+            ps.setInt(2, a.getAbschnittsId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(int abschnittsId) {
+        String sql = "DELETE FROM MAUTABSCHNITT WHERE ABSCHNITTS_ID = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, abschnittsId);
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -1,17 +1,21 @@
 package de.htwberlin.dbtech.aufgaben.ue03.dao;
-
+import de.htwberlin.dbtech.object.Mautabschnitt;
 /**
  * Die Schnittstelle für Mautabschnitt-Datenbankzugriffe
  *
  */
+
+
+
 public interface MautabschnittDao {
 
-    /**
-     * Holt die Länge eines Mautabschnitts
-     *
-     * @param mautAbschnitt die Abschnitts-ID
-     * @return die Länge in Metern
-     */
-    double getAbschnittsLaenge(int mautAbschnitt);
+    Mautabschnitt create(Mautabschnitt abschnitt);
+
+    Mautabschnitt getById(int abschnittsId);
+
+    void update(Mautabschnitt abschnitt);
+
+    void delete(int abschnittsId);
 }
+
 

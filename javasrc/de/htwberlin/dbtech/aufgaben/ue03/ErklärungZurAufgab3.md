@@ -39,7 +39,6 @@ In `MautServiceImpl` alle Hilfsmethoden direkt schreiben:
 - `hasActiveDevice()`
 - `isCorrectAxleCountAutomatic()` / `isCorrectAxleCountManual()`
 - `findOpenBooking()`
-- `closeBooking()`
 - `handleAutomatic()` / `handleManual()`
 
 **Resultat:** Alle 6 Tests sind grün ✓
@@ -47,10 +46,9 @@ In `MautServiceImpl` alle Hilfsmethoden direkt schreiben:
 ### Phase 2: DAOs erstellen & Service anpassen
 
 Für jeden DAO:
-1. Interface schreiben (Methodensignaturen)
-2. Implementierung schreiben (SQL-Code)
-3. Im Service nutzen statt direkt SQL zu schreiben
-4. Alte, unbenutzte Methoden von Service-Klasse entfernen
+1. Interface schreiben mit folgenden Methoden: create, get, update, delete
+2. Implementierungsklasse schreiben
+3. In der Serviceklasse dann diese DAOs nutzen, um auf die DB zuzugreifen und Objekte zu erstellen, holen, updaten oder löschen.
 
 ---
 
@@ -71,7 +69,43 @@ ACHSZAHL speichert: `"= 4"` oder `">= 5"` (nicht nur Zahlen!)
 
 - [ ] JDBC: Connection, PreparedStatement, ResultSet
 - [ ] SQL: JOIN, UNION, WHERE, COUNT, MAX
-- [ ] DAO-Pattern: Interface + Implementierung
+- [ ] DAO-Pattern: Interface + Implementierungsklasse
 - [ ] Exceptions: UnkownVehicleException, InvalidVehicleDataException, 
+
+--- 
+## Anmerkungen vom Dozent: 
+Zu jedem Dao muss unbedingt eine Klasse für dieses Objekt erstellt werden (wie bei Buchung).
+Jede Methode (find, delete, update, create) außer unwichtigen Hilfsmethoden muss dann auf dieses Objekt zugreifen, 
+statt auf (boolean, int, String, etc.) siehe findOpenBooking.
+
+Daos Klassen sollen diese 4 Grund Methoden beeinhalten:
+create, get, update, delete
+
+Die restlichen sind Hilfsmethoden und sollten eigentlich bei der Service Implementierungsklasse stehen.
+
+Kurz zusammengefasst: Wir sollen mit Objekten arbeiten.
+
+---
+## Dao:
+DAO‑Instanz:
+Ein Objekt vom Typ BuchungDaooImpl, das nur die „Werkzeuge“ für DB‑Zugriffe bereitstellt (SQL ausführen, ResultSet → Buchung bauen, UPDATE senden).
+Dieses Objekt hat keinen Zustand pro Buchung, sondern nur die Connection.
+
+Buchung‑Objekte:
+Jede Buchung ist ein eigenes Objekt mit eigenen Feldern (buchung_id, b_id, …).
+Sie werden vom DAO nur geladen oder gespeichert.
+
+Erlärung zum Dao:
+Das Data Access Object (DAO) ist ein Übersetzer und Vermittler in einem Computerprogramm. 
+Es ist ein spezielles Objekt, das als einzige Komponente direkt mit der Datenbank (dem "Speicherort") sprechen darf. 
+Die Hauptanwendung (die "Spiellogik") gibt dem DAO Anweisungen wie "speichere diesen Benutzer" oder "hole mir alle Bestellungen". 
+Das DAO führt diese technischen Befehle aus und liefert die Ergebnisse zurück, 
+wodurch der Rest des Programms sauber, flexibel und von den Details der Datenhaltung entkoppelt bleibt.
+
+
+
+
+
+
 
 
